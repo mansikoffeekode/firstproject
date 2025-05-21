@@ -1,8 +1,8 @@
 from django.contrib.auth import password_validation
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
-
 from user.models import User
+from user.utils import generate_otp, otp_verification_mail
 
 
 class AuthenticateSerializer(serializers.ModelSerializer):
@@ -41,11 +41,17 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(email=validated_data['email'],
                                         name=validated_data['name'],
                                         password=validated_data['password'])
+        user = generate_otp(user)
+        otp_verification_mail(user)
         return user
 
     def to_representation(self, instance):
         data = AuthenticateSerializer(instance, context=self.context).data
         return data
+
+
+class OtpVerifySerializer(serializers.Serializer):
+    otp = serializers.IntegerField(required=True)
 
 
 class ResetPasswordSerializer(serializers.Serializer):
@@ -93,4 +99,4 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'dob', 'is_active', 'date_joined']
+        fields = ['id', 'email', 'name', 'dob', 'is_active', 'is_verified', 'date_joined']

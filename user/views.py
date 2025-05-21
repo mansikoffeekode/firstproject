@@ -34,12 +34,35 @@ class LoginView(APIView):
                 return Response({"password": "Password is wrong"}, status=status.HTTP_400_BAD_REQUEST)
             elif not user.is_active:
                 return Response({"is_active": "User is not active."}, status=status.HTTP_400_BAD_REQUEST)
+            elif not user.is_verified:
+                return Response({"is_verified": "Please verify your mail then try again!"},
+                                status=status.HTTP_400_BAD_REQUEST)
             user.last_login = timezone.now()
             user.save()
             data = AuthenticateSerializer(user, context={'request': request}).data
             return Response(data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response({"email": "Email is not exists in our system"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OtpVerifyView(APIView):
+    serializer_class = OtpVerifySerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = User.objects.get(pk=request.user.id)
+        try:
+            if user.otp == int(request.data['otp']):
+                user.is_verified = True
+                user.save(update_fields=['is_verified'])
+                data = AuthenticateSerializer(user, context={'request': request}).data
+                return Response(data, status=status.HTTP_200_OK)
+            else:
+                return Response({"otp": "Please enter correct otp!"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PasswordResetRequestView(APIView):

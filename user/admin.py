@@ -8,7 +8,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['pk', 'email', 'name', 'dob', 'is_active', 'is_superuser', 'is_staff', 'date_joined']
+    list_display = ['pk', 'email', 'name', 'dob', 'otp', 'is_active', 'is_superuser', 'is_staff', 'date_joined']
     search_fields = ['email', 'name']
     list_filter = ['is_superuser', 'is_staff', 'is_active']
     ordering = ['pk']
